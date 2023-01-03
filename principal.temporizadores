@@ -1,0 +1,462 @@
+/* CÓDIGO DE USUARIO INICIO Encabezado */
+/* *
+  **************************************************** ***************************
+  * @archivo: principal.c
+  * @brief: cuerpo principal del programa
+  **************************************************** ***************************
+  * @atención
+  *
+  * Derechos de autor (c) 2023 STMicroelectronics.
+  * Reservados todos los derechos.
+  *
+  * Este software tiene licencia bajo los términos que se pueden encontrar en el archivo de LICENCIA
+  * en el directorio raíz de este componente de software.
+  * Si no se incluye ningún archivo de LICENCIA con este software, se proporciona TAL CUAL.
+  *
+  **************************************************** ***************************
+  */
+/* CÓDIGO DE USUARIO FIN Encabezado */
+/* Incluye ----------------------------------------------- ------------------- */
+# include  " principal.h "
+
+/* Privado incluye ---------------------------------------------- ------------ */
+/* INICIO DEL CÓDIGO DE USUARIO Incluye */
+
+/* CÓDIGO DE USUARIO FIN Incluye */
+
+/* Definición de tipo privada ---------------------------------------------- ------------- */
+/* CÓDIGO DE USUARIO INICIO PTD */
+
+/* CÓDIGO DE USUARIO FIN PTD */
+
+/* Definición privada ---------------------------------------------- -------------- */
+/* CÓDIGO DE USUARIO INICIO PD */
+/* CÓDIGO DE USUARIO FIN PD */
+
+/* Macro privada ---------------------------------------------- --------------- */
+/* CÓDIGO DE USUARIO EMPIEZA PM */
+
+/* CÓDIGO DE USUARIO FIN PM */
+
+/* Variables privadas ---------------------------------------------- ----------- */
+ADC_HandleTypeDef hadc1;
+TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim2;
+
+/* CÓDIGO DE USUARIO INICIO PV */
+
+/* CÓDIGO DE USUARIO FIN PV */
+
+/* Prototipos de funciones privadas --------------------------------------------- -- */
+void  SystemClock_Config (void );
+static void  MX_GPIO_Init ( void );
+static void  MX_ADC1_Init ( void );
+static void MX_TIM1_Init (void);
+static void MX_TIM2_Init(void);
+/* CÓDIGO DE USUARIO INICIO PFP */
+void InitialiceTimer(void);
+void parpadeo(void);
+/* CÓDIGO DE USUARIO FIN PFP */
+
+/* Código de usuario privado --------------------------------------------- ------------ */
+/* CÓDIGO DE USUARIO EMPIEZA 0 */
+uint8_t ADC_val;
+ modo int volatile = 0 ;
+ 
+ void InitialiceTimer() 
+ {
+	 HAL_TIM_Base_Init(&htim2);
+	 //inicializamos el temporizador segun los tiempos determinados
+	 HAL_TIM_Base_Start(&htim2); //creamos la base de tiempo 
+ }
+
+ void parpadeo()//activa y desactiva los pines para su parpadeo con leds
+ {
+	 HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+	 HAL_Delay(300);
+ }
+anular  HAL_GPIO_EXTI_Callback ( uint16_t GPIO_Pin){
+
+	if (GPIO_Pin==GPIO_PIN_0) // boton azul placa
+	{
+		modo= 0 ;
+	}
+	if (GPIO_Pin==GPIO_PIN_1){ // boton auxiliar 1
+		modo= 1 ;
+	}
+	if (GPIO_Pin==GPIO_PIN_2){ // boton auxiliar 2
+		modo= 2 ;
+	}
+	if (GPIO_Pin==GPIO_PIN_3){ // boton auxiliar 3
+		modo= 3 ;
+	}
+}
+
+/* CÓDIGO DE USUARIO FIN 0 */
+
+/* *
+  * @brief El punto de entrada de la aplicación.
+  * @retval internacional
+  */
+int  principal ( vacío )
+{
+  /* CÓDIGO DE USUARIO EMPIEZA 1 */
+
+  /* CÓDIGO DE USUARIO FIN 1 */
+
+  /* Configuración de MCU------------------------------------------------------- ---------- */
+
+  /* Restablecimiento de todos los periféricos, Inicializa la interfaz Flash y el Systick. */
+  HAL_Init ();
+
+  /* COMIENZO DEL CÓDIGO DE USUARIO Init */
+
+  /* CÓDIGO DE USUARIO FIN Init */
+
+  /* Configurar el reloj del sistema */
+  SystemClock_Config ();
+
+  /* CÓDIGO DE USUARIO INICIO SysInit */
+
+  /* CÓDIGO DE USUARIO FIN SysInit */
+
+  /* Inicializar todos los periféricos configurados */
+  MX_GPIO_Init ();
+  MX_ADC1_Init ();
+  MX_TIM2_Init();
+  MX_TIM1_Init();
+  /* CÓDIGO DE USUARIO EMPIEZA 2 */
+
+  
+   HAL_GPIO_WritePin (GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
+
+  /* CÓDIGO DE USUARIO FIN 2 */
+
+  /* Bucle infinito */
+  /* EL CÓDIGO DE USUARIO COMIENZA MIENTRAS */
+  while (1)
+  {
+    /* CÓDIGO DE USUARIO TERMINA MIENTRAS */
+
+    /* CÓDIGO DE USUARIO EMPIEZA 3 */
+	  
+	  
+	  switch(modo)
+	  {
+		  case  1 : { // modo encender luz con boton
+			  HAL_GPIO_WritePin (GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
+		  }
+		  case  2 : { // modo luz activa con un temporizador
+			  InitialiceTimer();
+			  
+			  void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef*htim){
+				  if(htim->Instance==TIM2)
+					  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
+			  }
+
+		  }
+		  case  3 : { // Modo se enciende la luz en función del sensor LDR con convertidor
+
+			  HAL_ADC_Inicio (&hadc1);
+				  si ( HAL_ADC_PollForConversion (&hadc1, 100 )==HAL_OK)
+				  {
+				  ADC_val= HAL_ADC_GetValue (&hadc1);
+				  if (ADC_val <= 150 ) // poner el valor de luminosidad mas adecuado
+						  HAL_GPIO_WritePin (GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
+					  más
+						  HAL_GPIO_WritePin (GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
+				  }
+				  HAL_ADC_Stop (&hadc1);
+		  }
+		  default :{ // Se apaga independientemente del modo
+			  HAL_GPIO_WritePin (GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
+			  htim2.Instance->CCR2 =0;
+		  }
+	  }
+
+  }
+  /* CÓDIGO DE USUARIO FIN 3 */
+}
+
+/* *
+  * Configuración del reloj del sistema @brief
+  * @retval Ninguno
+  */
+vacío  SystemClock_Config ( vacío )
+{
+  RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
+
+  /* * Configurar el voltaje de salida del regulador interno principal
+  */
+  __HAL_RCC_PWR_CLK_ENABLE ();
+  __HAL_PWR_VOLTAGESCALING_CONFIG (PWR_REGULATOR_VOLTAGE_SCALE1);
+
+  /* * Inicializa los osciladores RCC de acuerdo con los parámetros especificados
+  * en la estructura RCC_OscInitTypeDef.
+  */
+  RCC_OscInitStruct. Tipo de oscilador = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct. EstadoHSIS = RCC_HSI_ON;
+  RCC_OscInitStruct. HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct. PLL . PLLEstado = RCC_PLL_ON;
+  RCC_OscInitStruct. PLL . FuentePLL = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct. PLL . PLLM = 8 ;
+  RCC_OscInitStruct. PLL . PLLN = 192 ;
+  RCC_OscInitStruct. PLL . PLLP = RCC_PLLP_DIV8;
+  RCC_OscInitStruct. PLL . PLLQ = 8 ;
+  si ( HAL_RCC_OscConfig (&RCC_OscInitStruct) != HAL_OK)
+  {
+    Controlador_de_errores ();
+  }
+
+  /* * Inicializa los relojes de los buses CPU, AHB y APB
+  */
+  RCC_ClkInitStruct. Tipo de reloj = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct. Fuente SYSCLK = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct. AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct. Divisor APB1CLK = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct. Divisor APB2CLK = RCC_HCLK_DIV1;
+
+  si ( HAL_RCC_ClockConfig (&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
+  {
+    Controlador_de_errores ();
+  }
+  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
+  HAL_SYSTICK_CLKSourceConfig(SysTick_CLKSOURCE_HCLK);
+  HAL_NVIC_SetPriority(SysTick_IRQn,0,0);
+}
+
+/* *
+  * Función de inicialización @brief ADC1
+  * @param Ninguno
+  * @retval Ninguno
+  */
+ vacío  estático MX_ADC1_Init ( vacío )
+{
+
+  /* CÓDIGO DE USUARIO INICIO ADC1_Init 0 */
+
+  /* CÓDIGO DE USUARIO FIN ADC1_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = { 0 };
+
+  /* CÓDIGO DE USUARIO INICIO ADC1_Init 1 */
+
+  /* CÓDIGO DE USUARIO FIN ADC1_Init 1 */
+
+  /* * Configurar las características globales del ADC (Reloj, Resolución, Alineación de datos y número de conversión)
+  */
+  hadc1. Instancia = ADC1;
+  hadc1. inicial _ ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+  hadc1. inicial _ Resolución = ADC_RESOLUTION_12B;
+  hadc1. inicial _ ScanConvMode = DESHABILITAR;
+  hadc1. inicial _ ContinuousConvMode = DESHABILITAR;
+  hadc1. inicial _ DiscontinuousConvMode = DESHABILITAR;
+  hadc1. inicial _ ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1. inicial _ ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1. inicial _ DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1. inicial _ NbrOfConversion = 1 ;
+  hadc1. inicial _ DMAContinuousRequests = DESHABILITAR;
+  hadc1. inicial _ EOCSelection = ADC_EOC_SINGLE_CONV;
+  si ( HAL_ADC_Init (&hadc1) != HAL_OK)
+  {
+    Controlador_de_errores ();
+  }
+
+  /* * Configurar para el canal regular ADC seleccionado su rango correspondiente en el secuenciador y su tiempo de muestreo.
+  */
+  sConfig . Canal = ADC_CHANNEL_8;
+  sConfig . Rango = 1 ;
+  sConfig . Tiempo de Muestreo = ADC_SAMPLETIME_3CYCLES;
+  si ( HAL_ADC_ConfigChannel (&hadc1, & sConfig ) != HAL_OK)
+  {
+    Controlador_de_errores ();
+  }
+  /* CÓDIGO DE USUARIO INICIO ADC1_Init 2 */
+
+  /* CÓDIGO DE USUARIO FIN ADC1_Init 2 */
+
+}
+ 
+static void MX_TIM1_Init (void)
+ {
+
+   /* CÓDIGO DE USUARIO INICIO TIM1_Init 0 */
+
+   /* CÓDIGO DE USUARIO FIN TIM1_Init 0 */
+
+   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+   TIM_MasterConfigTypeDef sMasterConfig = {0};
+   TIM_OC_InitTypeDef sConfigOC = {0};
+   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
+
+   /* CÓDIGO DE USUARIO INICIO TIM1_Init 1 */
+
+   /* CÓDIGO DE USUARIO FIN TIM1_Init 1 */
+   htim1.Instance = TIM1;
+   htim1.Init.Prescaler = 16;
+   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+   htim1.Init.Period = 100;
+   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+   htim1.Init.RepetitionCounter = 0;
+   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+   if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+   {
+     Controlador_de_errores();
+   }
+   sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+   if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+   {
+     Controlador_de_errores();
+   }
+   if (HAL_TIM_PWM_Init(&htim1) != HAL_OK)
+   {
+     Controlador_de_errores();
+   }
+   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+   if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+   {
+     Controlador_de_errores();
+   }
+   sConfigOC.OCMode = TIM_OCMODE_PWM1;
+   sConfigOC.Pulse = 0;
+   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+   sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+   sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+   if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+   {
+     Controlador_de_errores();
+   }
+   sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
+   sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
+   sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
+   sBreakDeadTimeConfig.DeadTime = 0;
+   sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
+   sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
+   sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
+   if (HAL_TIMEx_ConfigBreakDeadTime(&htim1, &sBreakDeadTimeConfig) != HAL_OK)
+   {
+     Controlador_de_errores();
+   }
+   /* CÓDIGO DE USUARIO INICIO TIM1_Init 2 */
+
+   /* CÓDIGO DE USUARIO FIN TIM1_Init 2 */
+   HAL_TIM_MspPostInit(&htim1);
+   /**
+     * Función de inicialización @brief TIM2
+     * @param Ninguno
+     * @retval Ninguno
+     */
+ }
+ 
+ static void MX_TIM2_Init (void)
+   {
+
+     /* CÓDIGO DE USUARIO INICIO TIM2_Init 0 */
+
+     /* CÓDIGO DE USUARIO FIN TIM2_Init 0 */
+
+     TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+     TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+     /* CÓDIGO DE USUARIO INICIO TIM2_Init 1 */
+
+     /* CÓDIGO DE USUARIO FIN TIM2_Init 1 */
+     htim2.Instance = TIM2;
+     htim2.Init.Prescaler = 16000;
+     htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+     htim2.Init.Period = 30000; // El contador del temporizador tendra un intervalo entre 0 y 20000
+     htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+     htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+     if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+     {
+       Controlador_de_errores();
+     }
+     sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+     if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+     {
+       Controlador_de_errores();
+     }
+     sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+     sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+     if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+     {
+       Controlador_de_errores();
+     }
+     /* CÓDIGO DE USUARIO INICIO TIM2_Init 2 */
+
+     /* CÓDIGO DE USUARIO FIN TIM2_Init 2 */
+
+   }
+
+/* *
+  * Función de inicialización GPIO @brief
+  * @param Ninguno
+  * @retval Ninguno
+  */
+ vacío  estático MX_GPIO_Init ( vacío )
+{
+  GPIO_InitTypeDef GPIO_InitStruct = { 0 };
+
+  /* Habilitar reloj de puertos GPIO */
+  __HAL_RCC_GPIOA_CLK_ENABLE ();
+  __HAL_RCC_GPIOB_CLK_ENABLE ();
+  __HAL_RCC_GPIOD_CLK_ENABLE ();
+
+  /* Configurar el nivel de salida del pin GPIO */
+  HAL_GPIO_WritePin (GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
+
+  /* Configurar pines GPIO: PA0 PA1 PA2 PA3 */
+  GPIO_InitStruct. Clavija = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3;
+  GPIO_InitStruct. Modo = GPIO_MODE_INPUT;
+  GPIO_InitStruct. Tirar = GPIO_NOPULL;
+  HAL_GPIO_Init (GPIOA, &GPIO_InitStruct);
+
+  /* Configurar pin GPIO: PD12 */
+  GPIO_InitStruct. Pasador = GPIO_PIN_12;
+  GPIO_InitStruct. Modo = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct. Tirar = GPIO_NOPULL;
+  GPIO_InitStruct. Velocidad = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init (GPIOD, &GPIO_InitStruct);
+
+}
+
+/* CÓDIGO DE USUARIO EMPIEZA 4 */
+
+/* CÓDIGO DE USUARIO FIN 4 */
+
+/* *
+  * @brief Esta función se ejecuta en caso de que ocurra un error.
+  * @retval Ninguno
+  */
+vacío  Error_Handler ( vacío )
+{
+  /* COMIENZO DEL CÓDIGO DE USUARIO Error_Handler_Debug */
+  /* El usuario puede agregar su propia implementación para informar el estado de retorno del error HAL */
+  __inhabilitar_irq ();
+  mientras ( 1 )
+  {
+  }
+  /* CÓDIGO DE USUARIO FIN Error_Handler_Debug */
+}
+
+#ifdef   USE_FULL_ASSERT _
+/* *
+  * @brief Informa el nombre del archivo de origen y el número de línea de origen
+  * donde se ha producido el error assert_param.
+  * Archivo @param: puntero al nombre del archivo de origen
+  * Línea @param: número de origen de línea de error de assert_param
+  * @retval Ninguno
+  */
+anular  afirmación_fallida ( uint8_t *archivo, línea uint32_t )
+{
+  /* CÓDIGO DE USUARIO EMPIEZA 6 */
+  /* El usuario puede agregar su propia implementación para informar el nombre del archivo y el número de línea,
+     ej: printf("Valor de parámetros incorrecto: archivo %s en la línea %d\r\n", archivo, línea) */
+  /* CÓDIGO DE USUARIO FIN 6 */
+}
+# endif  /* USE_FULL_ASSERT */
